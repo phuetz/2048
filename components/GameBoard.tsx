@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import { View, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Tile } from './Tile';
-import { useWindowDimensions } from 'react-native';
 import { Grid } from '@/types/game';
 
 interface GameBoardProps {
