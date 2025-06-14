@@ -28,6 +28,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return {
       grid: initialGrid,
       size: 4,
+      targetValue: 2048,
       over: false,
       won: false,
       keepPlaying: false,
@@ -84,14 +85,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [bestScore]);
 
   // Initialize game with two random tiles
-  const initGame = useCallback(() => {
-    let newGrid = createGrid(4);
+  const initGame = useCallback((boardSize = 4) => {
+    let targetValue = 2048;
+    if (boardSize === 3) targetValue = 1024;
+    else if (boardSize === 5) targetValue = 4096;
+    else if (boardSize >= 6) targetValue = 8192;
+
+    let newGrid = createGrid(boardSize);
     newGrid = addRandomTile(newGrid);
     newGrid = addRandomTile(newGrid);
-    
+
     setGameState({
       grid: newGrid,
-      size: 4,
+      size: boardSize,
+      targetValue,
       over: false,
       won: false,
       keepPlaying: false,
@@ -136,7 +143,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Check if won
-      const won = checkWin(grid) && !gameState.won;
+      const won = checkWin(grid, gameState.targetValue) && !gameState.won;
       
       // Check if game over
       const over = !won && checkGameOver(grid, gameState.size);

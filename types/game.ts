@@ -28,6 +28,7 @@ export interface Grid {
 export interface GameState {
   grid: Grid;
   size: number;
+  targetValue: number;
   over: boolean;
   won: boolean;
   keepPlaying: boolean;

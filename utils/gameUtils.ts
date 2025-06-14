@@ -243,15 +243,15 @@ export function checkGameOver(grid: Grid, size: number): boolean {
 }
 
 // Check if player has won
-export function checkWin(grid: Grid): boolean {
+export function checkWin(grid: Grid, target = 2048): boolean {
   for (let x = 0; x < grid.size; x++) {
     for (let y = 0; y < grid.size; y++) {
       const tile = grid.cells[x][y];
-      if (tile && tile.value === 2048) {
+      if (tile && tile.value === target) {
         return true;
       }
     }
   }
-  
+
   return false;
 }
