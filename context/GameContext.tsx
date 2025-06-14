@@ -121,27 +121,29 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     // Move tiles
     const result = moveTiles(grid, direction, gameState.size);
     grid = result.grid;
-    
+
     if (result.moved) {
       // Add a new random tile
       grid = addRandomTile(grid);
-      
+
       // Update score
       const newScore = score + result.scoreGain;
       setScore(newScore);
-      
+
       // Update best score if needed
       if (newScore > bestScore) {
         setBestScore(newScore);
       }
-      
-      // Check if won
-      const won = checkWin(grid) && !gameState.won;
-      
-      // Check if game over
-      const over = !won && checkGameOver(grid, gameState.size);
-      
-      // Update game state
+    }
+
+    // Check if won
+    const won = checkWin(grid) && !gameState.won;
+
+    // Check if game over regardless of movement
+    const over = !won && checkGameOver(grid, gameState.size);
+
+    if (result.moved) {
+      // Update game state after a move
       setGameState(prevState => ({
         ...prevState,
         grid,
@@ -150,11 +152,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         previousState: previousGrid,
         previousScore,
       }));
-      
-      // Count games played
-      if (over) {
-        incrementGamesPlayed();
-      }
+    } else {
+      // No movement - just update over and win status
+      setGameState(prevState => ({
+        ...prevState,
+        over,
+        won: won || prevState.won,
+      }));
+    }
+
+    if (over) {
+      incrementGamesPlayed();
     }
   }, [gameState, score, bestScore]);
 
