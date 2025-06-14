@@ -25,6 +25,10 @@ export function ScoreBoard({ score, bestScore }: ScoreBoardProps) {
 
   useEffect(() => {
     if (score > previousScore) {
+      // Ensure only one timeout is active at a time
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       setScoreAddition(score - previousScore);
       // Animate score addition
       additionOpacity.value = 1;
@@ -37,7 +41,7 @@ export function ScoreBoard({ score, bestScore }: ScoreBoardProps) {
       );
       
       additionTranslateY.value = withTiming(-30, { duration: 600 });
-      
+
       // Update previous score after animation
       timeoutRef.current = setTimeout(() => {
         setPreviousScore(score);
