@@ -1,105 +1,155 @@
-import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useIsFocused } from '@react-navigation/native';
+import { useStats } from '@/hooks/useStats';
+import { usePreferences } from '@/hooks/usePreferences';
+import { getAchievementProgress } from '@/utils/achievements';
+import { FontAwesome } from '@expo/vector-icons';
 
 export default function StatsScreen() {
-  const [bestScore, setBestScore] = React.useState(0);
-  const [gamesPlayed, setGamesPlayed] = React.useState(0);
-  const [statsLoaded, setStatsLoaded] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const isFocused = useIsFocused();
-
-  const loadStats = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const [storedBestScore, storedGamesPlayed] = await Promise.all([
-        AsyncStorage.getItem('bestScore'),
-        AsyncStorage.getItem('gamesPlayed')
-      ]);
-      
-      if (storedBestScore) {
-        setBestScore(parseInt(storedBestScore));
-      }
-      
-      if (storedGamesPlayed) {
-        setGamesPlayed(parseInt(storedGamesPlayed));
-      }
-      
-      setStatsLoaded(true);
-    } catch (error) {
-      console.error('Failed to load stats from storage', error);
-      setError('Failed to load statistics. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (isFocused) {
-      loadStats();
-    }
-  }, [isFocused, loadStats]);
-
-  const resetStats = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      await Promise.all([
-        AsyncStorage.setItem('bestScore', '0'),
-        AsyncStorage.setItem('gamesPlayed', '0')
-      ]);
-      
-      setBestScore(0);
-      setGamesPlayed(0);
-    } catch (error) {
-      console.error('Failed to reset stats', error);
-      setError('Failed to reset statistics. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { stats, achievements } = useStats();
+  const { theme } = usePreferences();
+  const achievementProgress = getAchievementProgress(achievements);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Game Statistics</Text>
-      
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadStats}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#776e65" />
-          <Text style={styles.loadingText}>Loading stats...</Text>
-        </View>
-      ) : statsLoaded ? (
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Best Score</Text>
-            <Text style={styles.statValue}>{bestScore}</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <ScrollView style={styles.scrollView}>
+        <Text style={[styles.title, { color: theme.text }]}>Statistics</Text>
+
+        {/* Main Stats */}
+        <View style={[styles.section, { backgroundColor: theme.scoreBackground }]}>
+          <View style={styles.statRow}>
+            <View style={styles.statItem}>
+              <FontAwesome name="trophy" size={24} color={theme.tile512} />
+              <Text style={[styles.statLabel, { color: theme.secondary }]}>Best Score</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>{stats.bestScore}</Text>
+            </View>
+            <View style={styles.statItem}>
+              <FontAwesome name="gamepad" size={24} color={theme.tile256} />
+              <Text style={[styles.statLabel, { color: theme.secondary }]}>Games Played</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>{stats.gamesPlayed}</Text>
+            </View>
           </View>
-          
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Games Played</Text>
-            <Text style={styles.statValue}>{gamesPlayed}</Text>
+
+          <View style={styles.statRow}>
+            <View style={styles.statItem}>
+              <FontAwesome name="star" size={24} color={theme.tile128} />
+              <Text style={[styles.statLabel, { color: theme.secondary }]}>Games Won</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>{stats.gamesWon}</Text>
+            </View>
+            <View style={styles.statItem}>
+              <FontAwesome name="fire" size={24} color={theme.tile64} />
+              <Text style={[styles.statLabel, { color: theme.secondary }]}>Best Streak</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>{stats.bestStreak}</Text>
+            </View>
           </View>
-          
-          <TouchableOpacity style={styles.resetButton} onPress={resetStats}>
-            <Text style={styles.resetButtonText}>Reset Statistics</Text>
-          </TouchableOpacity>
+
+          <View style={styles.statRow}>
+            <View style={styles.statItem}>
+              <FontAwesome name="square" size={24} color={theme.tile2048} />
+              <Text style={[styles.statLabel, { color: theme.secondary }]}>Highest Tile</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>{stats.highestTile || 0}</Text>
+            </View>
+            <View style={styles.statItem}>
+              <FontAwesome name="bar-chart" size={24} color={theme.primary} />
+              <Text style={[styles.statLabel, { color: theme.secondary }]}>Total Score</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>
+                {stats.totalScore.toLocaleString()}
+              </Text>
+            </View>
+          </View>
         </View>
-      ) : null}
+
+        {/* Win Rate */}
+        <View style={[styles.section, { backgroundColor: theme.scoreBackground }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Performance</Text>
+          <View style={styles.progressContainer}>
+            <View style={styles.progressInfo}>
+              <Text style={[styles.progressLabel, { color: theme.secondary }]}>Win Rate</Text>
+              <Text style={[styles.progressValue, { color: theme.text }]}>
+                {stats.gamesPlayed > 0
+                  ? `${Math.round((stats.gamesWon / stats.gamesPlayed) * 100)}%`
+                  : '0%'}
+              </Text>
+            </View>
+            <View style={[styles.progressBar, { backgroundColor: theme.cell }]}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    backgroundColor: theme.tile128,
+                    width: `${stats.gamesPlayed > 0 ? (stats.gamesWon / stats.gamesPlayed) * 100 : 0}%`,
+                  },
+                ]}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Achievements */}
+        <View style={[styles.section, { backgroundColor: theme.scoreBackground }]}>
+          <View style={styles.achievementHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Achievements</Text>
+            <Text style={[styles.achievementProgress, { color: theme.secondary }]}>
+              {achievementProgress.unlocked}/{achievementProgress.total} ({achievementProgress.percentage}%)
+            </Text>
+          </View>
+
+          <View style={[styles.progressBar, { backgroundColor: theme.cell, marginBottom: 20 }]}>
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  backgroundColor: theme.tile512,
+                  width: `${achievementProgress.percentage}%`,
+                },
+              ]}
+            />
+          </View>
+
+          {achievements.map((achievement) => (
+            <View
+              key={achievement.id}
+              style={[
+                styles.achievementItem,
+                {
+                  backgroundColor: achievement.unlocked ? theme.cell : 'transparent',
+                  borderColor: theme.cell,
+                  borderWidth: achievement.unlocked ? 0 : 1,
+                },
+              ]}
+            >
+              <View style={styles.achievementIcon}>
+                <FontAwesome
+                  name={achievement.unlocked ? 'trophy' : 'lock'}
+                  size={20}
+                  color={achievement.unlocked ? theme.tile512 : theme.secondary}
+                />
+              </View>
+              <View style={styles.achievementInfo}>
+                <Text
+                  style={[
+                    styles.achievementName,
+                    {
+                      color: achievement.unlocked ? theme.text : theme.secondary,
+                    },
+                  ]}
+                >
+                  {achievement.name}
+                </Text>
+                <Text
+                  style={[
+                    styles.achievementDescription,
+                    { color: theme.secondary },
+                  ]}
+                >
+                  {achievement.description}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -107,79 +157,112 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#faf8ef',
+  },
+  scrollView: {
+    flex: 1,
     padding: 20,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#776e65',
-    marginVertical: 20,
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 18,
-    color: '#776e65',
-    marginTop: 10,
-  },
-  errorContainer: {
-    backgroundColor: '#ffc9c9',
-    padding: 15,
-    borderRadius: 6,
     marginBottom: 20,
-    alignItems: 'center',
-  },
-  errorText: {
-    color: '#d85959',
-    fontSize: 16,
-    marginBottom: 10,
     textAlign: 'center',
   },
-  retryButton: {
-    backgroundColor: '#8f7a66',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 4,
+  section: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  retryButtonText: {
-    color: 'white',
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 12,
+  },
+  statLabel: {
+    fontSize: 12,
+    marginTop: 8,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  progressContainer: {
+    marginBottom: 8,
+  },
+  progressInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  progressLabel: {
+    fontSize: 14,
+  },
+  progressValue: {
     fontSize: 14,
     fontWeight: 'bold',
   },
-  statsContainer: {
-    marginTop: 20,
+  progressBar: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
-  statItem: {
-    backgroundColor: '#eee4da',
-    borderRadius: 6,
-    padding: 20,
-    marginBottom: 16,
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
   },
-  statLabel: {
-    fontSize: 18,
-    color: '#776e65',
+  achievementHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 8,
   },
-  statValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#776e65',
+  achievementProgress: {
+    fontSize: 14,
+    fontWeight: '600',
   },
-  resetButton: {
-    backgroundColor: '#8f7a66',
-    padding: 15,
-    borderRadius: 6,
+  achievementItem: {
+    flexDirection: 'row',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  achievementIcon: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginRight: 12,
   },
-  resetButtonText: {
-    color: 'white',
+  achievementInfo: {
+    flex: 1,
+  },
+  achievementName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  achievementDescription: {
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

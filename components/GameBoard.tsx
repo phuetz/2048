@@ -3,6 +3,7 @@ import { View, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Tile } from './Tile';
 import { Grid } from '@/types/game';
+import { usePreferences } from '@/hooks/usePreferences';
 
 interface GameBoardProps {
   grid: Grid;
@@ -16,6 +17,8 @@ const SWIPE_THRESHOLD = Platform.OS === 'android' ? 20 : 20;
 const SWIPE_VELOCITY_THRESHOLD = Platform.OS === 'android' ? 150 : 120;
 
 export function GameBoard({ grid, size, onSwipe }: GameBoardProps) {
+  const { theme } = usePreferences();
+
   // Calculate board dimensions based on screen size
   const { width, height } = useWindowDimensions();
   const isPortrait = height > width;
@@ -85,32 +88,33 @@ export function GameBoard({ grid, size, onSwipe }: GameBoardProps) {
   // Generate rows and cells for the grid
   const renderCells = () => {
     const rows = [];
-    
+
     for (let x = 0; x < size; x++) {
       const row = [];
-      
+
       for (let y = 0; y < size; y++) {
         row.push(
-          <View 
-            key={`cell-${x}-${y}`} 
+          <View
+            key={`cell-${x}-${y}`}
             style={[
-              styles.cell, 
-              { 
-                width: cellSize, 
+              styles.cell,
+              {
+                width: cellSize,
                 height: cellSize,
                 marginRight: y < size - 1 ? cellMargin : 0,
+                backgroundColor: theme.cell,
               }
-            ]} 
+            ]}
           />
         );
       }
-      
+
       rows.push(
-        <View 
-          key={`row-${x}`} 
+        <View
+          key={`row-${x}`}
           style={[
-            styles.row, 
-            { 
+            styles.row,
+            {
               marginBottom: x < size - 1 ? cellMargin : 0,
             }
           ]}
@@ -119,7 +123,7 @@ export function GameBoard({ grid, size, onSwipe }: GameBoardProps) {
         </View>
       );
     }
-    
+
     return rows;
   };
 
@@ -154,10 +158,17 @@ export function GameBoard({ grid, size, onSwipe }: GameBoardProps) {
   return (
     <GestureHandlerRootView>
       <GestureDetector gesture={swipeGesture}>
-        <View style={[styles.boardContainer, { width: boardSize, height: boardSize }]}>
+        <View style={[
+          styles.boardContainer,
+          {
+            width: boardSize,
+            height: boardSize,
+            backgroundColor: theme.board,
+          }
+        ]}>
           {/* Grid background */}
           <View style={styles.grid}>{renderCells()}</View>
-          
+
           {/* Tiles */}
           <View style={styles.tileContainer}>{renderTiles()}</View>
         </View>
@@ -169,9 +180,16 @@ export function GameBoard({ grid, size, onSwipe }: GameBoardProps) {
 const styles = StyleSheet.create({
   boardContainer: {
     position: 'relative',
-    backgroundColor: '#bbada0',
-    borderRadius: 6,
+    borderRadius: 8,
     padding: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 6,
   },
   grid: {
     position: 'absolute',
@@ -184,8 +202,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   cell: {
-    backgroundColor: 'rgba(238, 228, 218, 0.35)',
-    borderRadius: 3,
+    borderRadius: 4,
   },
   tileContainer: {
     position: 'absolute',

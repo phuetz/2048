@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, BounceIn, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import { usePreferences } from '@/hooks/usePreferences';
 
 interface GameMessageProps {
   won: boolean;
@@ -11,22 +12,64 @@ interface GameMessageProps {
 }
 
 export function GameMessage({ won, over, onRestart, onUndo, onKeepPlaying }: GameMessageProps) {
+  const { theme } = usePreferences();
+  const scale = useSharedValue(1);
+
+  React.useEffect(() => {
+    if (won) {
+      // Victory celebration animation
+      scale.value = withRepeat(
+        withSequence(
+          withTiming(1.1, { duration: 300 }),
+          withTiming(1, { duration: 300 })
+        ),
+        3
+      );
+    }
+  }, [won]);
+
+  const animatedMessageStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }]
+    };
+  });
+
   return (
-    <Animated.View entering={FadeIn.duration(800)} style={styles.container}>
-      <Text style={styles.message}>{won ? 'You Win!' : 'Game Over!'}</Text>
-      
+    <Animated.View
+      entering={FadeIn.duration(800)}
+      style={[styles.container, { backgroundColor: theme.overlayBackground }]}
+    >
+      <Animated.Text
+        style={[
+          styles.message,
+          { color: won ? theme.tile512 : theme.text },
+          animatedMessageStyle
+        ]}
+      >
+        {won ? '🎉 You Win! 🎉' : 'Game Over!'}
+      </Animated.Text>
+
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={onRestart}>
-          <Text style={styles.buttonText}>Try Again</Text>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: theme.buttonBackground }]}
+          onPress={onRestart}
+        >
+          <Text style={[styles.buttonText, { color: theme.buttonText }]}>Try Again</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.button} onPress={onUndo}>
-          <Text style={styles.buttonText}>Undo</Text>
+
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: theme.buttonBackground }]}
+          onPress={onUndo}
+        >
+          <Text style={[styles.buttonText, { color: theme.buttonText }]}>Undo</Text>
         </TouchableOpacity>
-        
+
         {won && (
-          <TouchableOpacity style={styles.button} onPress={onKeepPlaying}>
-            <Text style={styles.buttonText}>Keep Going</Text>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: theme.primary }]}
+            onPress={onKeepPlaying}
+          >
+            <Text style={[styles.buttonText, { color: theme.buttonText }]}>Keep Going</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -41,42 +84,44 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: Platform.select({
-      android: 'rgba(238, 228, 218, 0.85)',
-      default: 'rgba(238, 228, 218, 0.73)'
-    }),
-    borderRadius: 6,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 100,
   },
   message: {
-    fontSize: Platform.OS === 'android' ? 42 : 48,
+    fontSize: Platform.OS === 'android' ? 44 : 52,
     fontWeight: 'bold',
-    color: '#776e65',
-    marginBottom: Platform.OS === 'android' ? 15 : 20,
+    marginBottom: Platform.OS === 'android' ? 20 : 24,
     fontFamily: Platform.select({
       android: 'sans-serif-condensed',
       default: undefined
     }),
+    textAlign: 'center',
   },
   buttonContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     marginTop: 30,
-    gap: 10,
+    gap: 12,
   },
   button: {
-    backgroundColor: '#8f7a66',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 3,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
     minWidth: 120,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   buttonText: {
-    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
