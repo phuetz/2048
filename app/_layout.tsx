@@ -5,6 +5,8 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GameProvider } from '@/context/GameContext';
+import { PreferencesProvider } from '@/context/PreferencesContext';
+import { StatsProvider } from '@/context/StatsContext';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -12,13 +14,17 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <GameProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
-        </GameProvider>
+        <PreferencesProvider>
+          <StatsProvider>
+            <GameProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <StatusBar style="auto" />
+            </GameProvider>
+          </StatsProvider>
+        </PreferencesProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

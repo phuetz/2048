@@ -1,14 +1,18 @@
 import React, { memo } from 'react';
 import { StyleSheet, Text, Platform } from 'react-native';
-import Animated, { 
-  useAnimatedStyle, 
+import Animated, {
+  useAnimatedStyle,
   useSharedValue,
   withTiming,
   withSequence,
-  withDelay,
+  withSpring,
   FadeIn,
-  Layout
+  Layout,
+  SlideInUp,
+  ZoomIn,
 } from 'react-native-reanimated';
+import { usePreferences } from '@/hooks/usePreferences';
+import { getTileColor, getTileTextColor } from '@/constants/theme';
 
 interface TileProps {
   value: number;
@@ -21,23 +25,39 @@ interface TileProps {
 }
 
 function TileComponent({ value, x, y, cellSize, cellMargin, isNew, isMerged }: TileProps) {
+  const { theme } = usePreferences();
+
   // Animation values
   const scale = useSharedValue(isNew ? 0 : 1);
-  
+  const rotation = useSharedValue(0);
+
   React.useEffect(() => {
     if (isNew) {
       scale.value = withSequence(
         withTiming(0, { duration: 0 }),
-        withTiming(1.1, { duration: 150 }),
-        withTiming(1, { duration: 100 })
+        withSpring(1, {
+          damping: 15,
+          stiffness: 150,
+        })
       );
     } else if (isMerged) {
       scale.value = withSequence(
-        withTiming(1.2, { duration: 100 }),
-        withTiming(1, { duration: 100 })
+        withSpring(1.15, {
+          damping: 10,
+          stiffness: 200,
+        }),
+        withSpring(1, {
+          damping: 12,
+          stiffness: 150,
+        })
+      );
+      rotation.value = withSequence(
+        withTiming(2, { duration: 100 }),
+        withTiming(-2, { duration: 100 }),
+        withTiming(0, { duration: 100 })
       );
     }
-  }, [isNew, isMerged, scale]);
+  }, [isNew, isMerged, scale, rotation]);
 
   // Calculate position
   const left = y * (cellSize + cellMargin);
@@ -46,7 +66,10 @@ function TileComponent({ value, x, y, cellSize, cellMargin, isNew, isMerged }: T
   // Animated styles
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ scale: scale.value }]
+      transform: [
+        { scale: scale.value },
+        { rotate: `${rotation.value}deg` }
+      ]
     };
   });
 
@@ -57,32 +80,35 @@ function TileComponent({ value, x, y, cellSize, cellMargin, isNew, isMerged }: T
     return Platform.OS === 'android' ? 28 : 32;
   };
 
+  const backgroundColor = getTileColor(value, theme);
+  const textColor = getTileTextColor(value, theme);
+
   return (
     <Animated.View
       style={[
         styles.tile,
-        styles[`tile${value}`] || styles.tileSuper,
         {
           width: cellSize,
           height: cellSize,
           left,
           top,
+          backgroundColor,
         },
         animatedStyle,
       ]}
       layout={Layout.springify()}
-      entering={FadeIn}
+      entering={ZoomIn.springify()}
     >
       <Text style={[
         styles.tileText,
-        { 
+        {
           fontSize: getFontSize(),
+          color: textColor,
           fontFamily: Platform.select({
             android: 'sans-serif-condensed',
             default: undefined
-          }) 
+          })
         },
-        value >= 8 && styles.lightText
       ]}>
         {value}
       </Text>
@@ -96,51 +122,19 @@ export const Tile = memo(TileComponent);
 const styles = StyleSheet.create({
   tile: {
     position: 'absolute',
-    borderRadius: 3,
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   tileText: {
     fontWeight: 'bold',
-    color: '#776e65',
-  },
-  lightText: {
-    color: '#f9f6f2',
-  },
-  tile2: {
-    backgroundColor: '#eee4da',
-  },
-  tile4: {
-    backgroundColor: '#ede0c8',
-  },
-  tile8: {
-    backgroundColor: '#f2b179',
-  },
-  tile16: {
-    backgroundColor: '#f59563',
-  },
-  tile32: {
-    backgroundColor: '#f67c5f',
-  },
-  tile64: {
-    backgroundColor: '#f65e3b',
-  },
-  tile128: {
-    backgroundColor: '#edcf72',
-  },
-  tile256: {
-    backgroundColor: '#edcc61',
-  },
-  tile512: {
-    backgroundColor: '#edc850',
-  },
-  tile1024: {
-    backgroundColor: '#edc53f',
-  },
-  tile2048: {
-    backgroundColor: '#edc22e',
-  },
-  tileSuper: {
-    backgroundColor: '#3c3a32',
   },
 });

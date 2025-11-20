@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGame } from '@/hooks/useGame';
+import { usePreferences } from '@/hooks/usePreferences';
 import { GameBoard } from '@/components/GameBoard';
 import { ScoreBoard } from '@/components/ScoreBoard';
 import { GameMessage } from '@/components/GameMessage';
@@ -17,11 +18,18 @@ export default function GameScreen() {
     undo,
     keepPlaying,
   } = useGame();
+  const { theme } = usePreferences();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, Platform.OS === 'android' && styles.titleAndroid]}>2048</Text>
+        <Text style={[
+          styles.title,
+          { color: theme.text },
+          Platform.OS === 'android' && styles.titleAndroid
+        ]}>
+          2048
+        </Text>
         <ScoreBoard score={score} bestScore={bestScore} />
       </View>
 
@@ -31,7 +39,7 @@ export default function GameScreen() {
           size={gameState.size}
           onSwipe={move}
         />
-        
+
         {(gameState.over || (gameState.won && !gameState.keepPlaying)) && (
           <GameMessage
             won={gameState.won}
@@ -46,12 +54,14 @@ export default function GameScreen() {
       <GameControls onRestart={restart} onUndo={undo} />
 
       <View style={styles.instructions}>
-        <Text style={styles.instructionText}>
-          {Platform.OS === 'web' 
-            ? 'Use arrow keys or swipe to move tiles' 
+        <Text style={[styles.instructionText, { color: theme.secondary }]}>
+          {Platform.OS === 'web'
+            ? 'Use arrow keys or swipe to move tiles'
             : 'Swipe to move tiles'}
         </Text>
-        <Text style={styles.instructionText}>Join the tiles with the same number!</Text>
+        <Text style={[styles.instructionText, { color: theme.text }]}>
+          Join the tiles with the same number!
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -60,10 +70,6 @@ export default function GameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Platform.select({
-      android: '#fff8ef',
-      default: '#faf8ef'
-    }),
     padding: 20,
   },
   header: {
@@ -75,7 +81,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#776e65',
   },
   titleAndroid: {
     fontSize: 42,
@@ -95,7 +100,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   instructionText: {
-    color: '#776e65',
     fontSize: Platform.OS === 'android' ? 14 : 16,
     marginBottom: 5,
     fontFamily: Platform.select({

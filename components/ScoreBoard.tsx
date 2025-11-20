@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, withSequence } from 'react-native-reanimated';
+import { usePreferences } from '@/hooks/usePreferences';
 
 interface ScoreBoardProps {
   score: number;
@@ -8,6 +9,7 @@ interface ScoreBoardProps {
 }
 
 export function ScoreBoard({ score, bestScore }: ScoreBoardProps) {
+  const { theme } = usePreferences();
   const [previousScore, setPreviousScore] = React.useState(score);
   const additionOpacity = useSharedValue(0);
   const additionTranslateY = useSharedValue(0);
@@ -59,19 +61,19 @@ export function ScoreBoard({ score, bestScore }: ScoreBoardProps) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.scoreContainer}>
-        <Text style={styles.scoreLabel}>SCORE</Text>
-        <Text style={styles.scoreValue}>{score}</Text>
+      <View style={[styles.scoreContainer, { backgroundColor: theme.scoreBackground }]}>
+        <Text style={[styles.scoreLabel, { color: theme.tileLightText }]}>SCORE</Text>
+        <Text style={[styles.scoreValue, { color: theme.buttonText }]}>{score}</Text>
         {scoreAddition > 0 && (
-          <Animated.Text style={[styles.scoreAddition, additionStyle]}>
+          <Animated.Text style={[styles.scoreAddition, additionStyle, { color: theme.primary }]}>
             +{scoreAddition}
           </Animated.Text>
         )}
       </View>
-      
-      <View style={styles.scoreContainer}>
-        <Text style={styles.scoreLabel}>BEST</Text>
-        <Text style={styles.scoreValue}>{bestScore}</Text>
+
+      <View style={[styles.scoreContainer, { backgroundColor: theme.scoreBackground }]}>
+        <Text style={[styles.scoreLabel, { color: theme.tileLightText }]}>BEST</Text>
+        <Text style={[styles.scoreValue, { color: theme.buttonText }]}>{bestScore}</Text>
       </View>
     </View>
   );
@@ -84,27 +86,33 @@ const styles = StyleSheet.create({
   },
   scoreContainer: {
     position: 'relative',
-    backgroundColor: '#bbada0',
-    borderRadius: 6,
-    padding: 10,
-    minWidth: 80,
+    borderRadius: 8,
+    padding: 12,
+    minWidth: 90,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   scoreLabel: {
-    color: '#eee4da',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
+    letterSpacing: 1,
   },
   scoreValue: {
-    color: 'white',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
+    marginTop: 4,
   },
   scoreAddition: {
     position: 'absolute',
     top: -20,
-    color: 'rgba(119, 110, 101, 0.9)',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });
